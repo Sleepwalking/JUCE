@@ -1989,8 +1989,8 @@ private:
         auto matches = [=](const char* s) { return strcmp (text, s) == 0; };
 
         if (matches ("receiveVstEvents")
-             || matches ("receiveVstMidiEvent")
-             || matches ("receiveVstMidiEvents"))
+         || matches ("receiveVstMidiEvent")
+         || matches ("receiveVstMidiEvents"))
         {
            #if JucePlugin_WantsMidiInput || JucePlugin_IsMidiEffect
             return 1;
@@ -2000,8 +2000,8 @@ private:
         }
 
         if (matches ("sendVstEvents")
-             || matches ("sendVstMidiEvent")
-             || matches ("sendVstMidiEvents"))
+         || matches ("sendVstMidiEvent")
+         || matches ("sendVstMidiEvents"))
         {
            #if JucePlugin_ProducesMidiOutput || JucePlugin_IsMidiEffect
             return 1;
@@ -2011,9 +2011,9 @@ private:
         }
 
         if (matches ("receiveVstTimeInfo")
-             || matches ("conformsToWindowRules")
-             || matches ("supportsViewDpiScaling")
-             || matches ("bypass"))
+         || matches ("conformsToWindowRules")
+         || matches ("supportsViewDpiScaling")
+         || matches ("bypass"))
         {
             return 1;
         }
@@ -2198,7 +2198,17 @@ namespace
 
                     auto* processor = createPluginFilterOfType (AudioProcessor::wrapperType_VST);
                     auto* wrapper = new JuceVSTWrapper (audioMaster, processor);
-                    return wrapper->getVstEffectInterface();
+                    auto* aEffect = wrapper->getVstEffectInterface();
+
+                    if (auto* callbackHandler = dynamic_cast<VSTCallbackHandler*> (processor))
+                    {
+                        callbackHandler->handleVstHostCallbackAvailable ([audioMaster, aEffect](int32 opcode, int32 index, pointer_sized_int value, void* ptr, float opt)
+                        {
+                            return audioMaster (aEffect, opcode, index, value, ptr, opt);
+                        });
+                    }
+
+                    return aEffect;
                 }
             }
             catch (...)
